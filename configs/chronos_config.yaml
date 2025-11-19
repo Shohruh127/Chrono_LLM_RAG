@@ -1,0 +1,33 @@
+# Chronos Configuration
+# Created by: Shohruh127
+# Date: 2025-11-19 10:47:49
+# Repository ID: 1099678425
+
+model:
+  name: "amazon/chronos-2"
+  device: "cuda"
+  dtype: "bfloat16"
+
+data:
+  target_col: "target"
+  timestamp_col: "timestamp"
+  id_col: "id"
+  freq: "YS"
+
+forecasting:
+  prediction_length: 4
+  quantile_levels: [0.1, 0.5, 0.9]
+  batch_size: 256
+  num_samples: 100
+
+preprocessing:
+  fill_missing: true
+  fill_method: "interpolate"
+  normalize: true
+  scaler: "standard"
+
+output:
+  save_dir: "models/chronos"
+  save_forecasts: true
+
+seed: 42

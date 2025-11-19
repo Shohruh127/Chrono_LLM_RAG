@@ -1,0 +1,27 @@
+# Python Dependencies
+# Created by: Shohruh127
+# Date: 2025-11-19 10:46:14
+
+torch>=2.0.0
+transformers==4.44.2
+accelerate>=0.20.0
+bitsandbytes>=0.41.0
+chronos-forecasting>=1.0.0
+sentence-transformers>=2.2.0
+faiss-cpu>=1.7.4
+rank-bm25>=0.2.2
+pandas>=2.0.0
+numpy>=1.24.0
+openpyxl>=3.1.0
+xlrd>=2.0.1
+plotly>=5.14.0
+matplotlib>=3.7.0
+gradio>=4.0.0
+pyyaml>=6.0
+python-dotenv>=1.0.0
+tqdm>=4.65.0
+nest-asyncio>=1.5.6
+pytest>=7.3.0
+pytest-cov>=4.1.0
+black>=23.3.0
+flake8>=6.0.0

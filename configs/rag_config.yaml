@@ -1,0 +1,27 @@
+# RAG Configuration
+# Created by: Shohruh127
+# Date: 2025-11-19 10:47:49
+# Repository ID: 1099678425
+
+embeddings:
+  model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  device: "cuda"
+  batch_size: 32
+  normalize_embeddings: true
+
+vector_store:
+  type: "faiss"
+  index_type: "IndexFlatIP"
+  save_path: "models/faiss/index.bin"
+  metadata_path: "models/faiss/metadata.json"
+
+retrieval:
+  top_k: 5
+  min_score: 0.3
+  max_context_length: 3000
+  rerank: false
+
+cache:
+  enabled: true
+  cache_dir: "models/faiss/cache"
+  ttl: 3600
