@@ -46,8 +46,21 @@ class ASTGuardrails:
                 'max_output_size_bytes': 1048576
             }
         
-        with open(config_file, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
+        try:
+            with open(config_file, 'r', encoding='utf-8') as f:
+                return yaml.safe_load(f)
+        except (yaml.YAMLError, IOError) as e:
+            # Fall back to default configuration on error
+            print(f"Warning: Failed to load config from {self.config_path}: {e}")
+            print("Using default security configuration.")
+            return {
+                'blocked_imports': ['os', 'sys', 'subprocess', 'socket'],
+                'blocked_calls': ['open', 'eval', 'exec', 'compile', '__import__'],
+                'blocked_attributes': ['__class__', '__bases__', '__code__', '__globals__'],
+                'allowed_modules': ['pandas', 'numpy', 'math', 'statistics'],
+                'execution_timeout_seconds': 30,
+                'max_output_size_bytes': 1048576
+            }
 
     def validate(self, code: str) -> Dict:
         """
