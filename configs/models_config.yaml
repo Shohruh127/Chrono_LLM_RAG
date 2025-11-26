@@ -1,0 +1,49 @@
+# Model Configuration
+# Created by: Shohruh127
+# Date: 2025-11-26
+# Repository ID: 1099678425
+
+# Tri-Force Model Stack Configuration
+
+forecaster:
+  name: "amazon/chronos-2"
+  description: "Time-Series Foundation Model for forecasting"
+  device: "cuda"
+  dtype: "bfloat16"
+  batch_size: 256
+
+analyst:
+  name: "behbudiy/Llama-3.1-8B-Uz"
+  description: "Uzbek Cultural Context - Language Analysis"
+  device: "auto"
+  use_4bit: true
+  max_tokens: 800
+  temperature: 0.3
+
+engineer:
+  name: "Qwen/Qwen2.5-Coder-7B-Instruct"
+  description: "SOTA Python Generation - Logic and Code"
+  device: "auto"
+  use_4bit: true
+  max_tokens: 800
+  temperature: 0.2
+
+# Model Selection Strategy
+# - Use Chronos-2 for all time series forecasting
+# - Use Llama-3.1-8B-Uz for natural language understanding with Uzbek cultural context
+# - Use Qwen2.5-Coder for code generation (PAL pattern) to avoid arithmetic hallucinations
+
+# Integration Fixes Applied
+integration_fixes:
+  chronos:
+    - "Use CPU pipelining - let pipeline handle device mapping"
+    - "No manual .to(device) calls"
+    - "Apply .unsqueeze(0).unsqueeze(0) for tensor dimension alignment"
+  
+  gradio:
+    - "Use list of dicts format for chat history"
+    - "ChatMessage API: [{'role': 'user', 'content': '...'}]"
+  
+  data:
+    - "Sanitize duplicate column names before processing"
+    - "Use DictionaryIngestionEngine to keep sheets separate"

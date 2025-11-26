@@ -1,7 +1,8 @@
 #Uzbek XLSX Preprocessor
 # Created by: Shohruh127
 
-from datetime import datetime
+import pandas as pd
+from datetime import datetime, timezone
 
 class UzbekXLSXPreprocessor:
     """Preprocesses Uzbek regional data from XLSX files into a Chronos-2 compatible format.
@@ -388,5 +389,5 @@ class UzbekXLSXPreprocessor:
 uzbek_preprocessor = UzbekXLSXPreprocessor()
 
 print("✅ Uzbek XLSX Preprocessor ready!")
-print(f"Current Date and Time (UTC): {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}")
+print(f"Current Date and Time (UTC): {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}")
 print(f"Current User's Login: Shohruh127")
