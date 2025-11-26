@@ -16,7 +16,7 @@ This module provides functionality to:
 
 Usage:
     from src.selector import SheetManager, ContextPropagator, create_selector
-    
+
     manager, context = create_selector("data.xlsx")
     sheets = manager.list_sheets()
     df = manager.select_sheet("7-Agriculture")
@@ -30,20 +30,20 @@ from .ui_components import (
     create_sheet_preview,
     create_domain_badge,
     create_selector_interface,
-    create_compact_selector
+    create_compact_selector,
 )
 
 
 def create_selector(filepath: str):
     """
     Initialize selector components for a file.
-    
+
     Args:
         filepath: Path to Excel file
-        
+
     Returns:
         Tuple of (SheetManager, ContextPropagator)
-        
+
     Example:
         manager, context = create_selector("Namangan_Macro_2024.xlsx")
         sheets = manager.list_sheets()
@@ -56,12 +56,12 @@ def create_selector(filepath: str):
 
 
 __all__ = [
-    'SheetManager',
-    'ContextPropagator',
-    'create_selector',
-    'create_sheet_dropdown',
-    'create_sheet_preview',
-    'create_domain_badge',
-    'create_selector_interface',
-    'create_compact_selector'
+    "SheetManager",
+    "ContextPropagator",
+    "create_selector",
+    "create_sheet_dropdown",
+    "create_sheet_preview",
+    "create_domain_badge",
+    "create_selector_interface",
+    "create_compact_selector",
 ]
