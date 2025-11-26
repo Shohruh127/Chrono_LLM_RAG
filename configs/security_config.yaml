@@ -13,7 +13,8 @@ blocked_imports:
   - sys
   - subprocess
   - shutil
-  - pathlib  # Can be used for file system traversal
+  # Note: pathlib is blocked for file system traversal; use allowed paths via config
+  - pathlib
   
   # Network access
   - socket

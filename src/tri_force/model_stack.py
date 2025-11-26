@@ -349,7 +349,16 @@ class TriForceStack:
         
         config = self.config["logic_engineer"]
         
-        prompt = f"<|im_start|>system\nYou are a Python coding assistant. Write clean, efficient code.\n<|im_end|>\n<|im_start|>user\n{query}\n<|im_end|>\n<|im_start|>assistant\n"
+        # Build prompt using multi-line format for better readability
+        prompt = (
+            "<|im_start|>system\n"
+            "You are a Python coding assistant. Write clean, efficient code.\n"
+            "<|im_end|>\n"
+            "<|im_start|>user\n"
+            f"{query}\n"
+            "<|im_end|>\n"
+            "<|im_start|>assistant\n"
+        )
         
         inputs = self._logic_tokenizer(
             prompt,
