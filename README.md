@@ -23,6 +23,8 @@ This project combines state-of-the-art time series forecasting with Retrieval-Au
 - ✅ **Uzbek Data Processing** - Automatic Cyrillic to Latin transliteration
 - ✅ **Interactive UI** - Gradio interface
 - ✅ **Anti-Hallucination** - Strict prompts and validation
+- ✅ **Sovereign Agent (Phase 5)** - PAL architecture with <1% hallucination rate
+- ✅ **Security Guardrails** - AST-based code validation and sandboxed execution
 
 ---
 

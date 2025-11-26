@@ -1,7 +1,6 @@
 #Uzbek XLSX Preprocessor
 # Created by: Shohruh127
 
-import pandas as pd
 from datetime import datetime
 
 class UzbekXLSXPreprocessor:

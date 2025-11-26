@@ -1,0 +1,66 @@
+# Security Configuration for Sovereign Agent
+# Created by: Shohruh127
+# Repository: Chrono_LLM_RAG
+# Repository ID: 1099678425
+
+# Blocked imports that could be used for malicious purposes
+blocked_imports:
+  - os
+  - sys
+  - subprocess
+  - socket
+  - shutil
+  - importlib
+  - __builtins__
+  - eval
+  - exec
+  - compile
+  - pathlib
+  - pickle
+  - shelve
+  - dbm
+
+# Blocked function calls
+blocked_calls:
+  - open
+  - input
+  - eval
+  - exec
+  - compile
+  - __import__
+  - globals
+  - locals
+  - vars
+  - dir
+  - getattr
+  - setattr
+  - delattr
+  - help
+
+# Blocked attribute access patterns
+blocked_attributes:
+  - __class__
+  - __bases__
+  - __subclasses__
+  - __code__
+  - __globals__
+  - __dict__
+  - __builtins__
+  - __import__
+  - __loader__
+  - __spec__
+
+# Allowed modules for safe operations
+allowed_modules:
+  - pandas
+  - numpy
+  - math
+  - statistics
+  - datetime
+  - decimal
+  - fractions
+
+# Execution settings
+execution_timeout_seconds: 30
+max_output_size_bytes: 1048576  # 1MB
+max_memory_mb: 256
