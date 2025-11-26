@@ -9,19 +9,20 @@
 
 import gradio as gr
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
-from datetime import datetime
 import sys
 import os
 
 # Add src to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.preprocessor import UzbekXLSXPreprocessor
-from src.chronos_forecaster import ChronosForecaster
-from src.rag_system import RAGSystem
-from src.llm_analyzer import LLMAnalyzer
+from src.preprocessor import UzbekXLSXPreprocessor  # noqa: E402
+from src.chronos_forecaster import ChronosForecaster  # noqa: E402
+from src.rag_system import RAGSystem  # noqa: E402
+from src.llm_analyzer import LLMAnalyzer  # noqa: E402
+from src.sidecar_engine import DictionaryIngestionEngine  # noqa: E402
+from src.report_generator import ReportGenerator  # noqa: E402
+from src.drive_persistence import DrivePersistence  # noqa: E402
 
 
 # Initialize components
@@ -29,9 +30,13 @@ preprocessor = UzbekXLSXPreprocessor()
 forecaster = ChronosForecaster()
 rag_system = RAGSystem()
 llm_analyzer = LLMAnalyzer(rag_system=rag_system)
+sidecar_engine = DictionaryIngestionEngine()
+report_generator = ReportGenerator()
+drive_persistence = DrivePersistence()
 
 # Global state
 llm_loaded = False
+current_sheet_data = None
 
 
 def create_forecast_plot(context_df, pred_df, location_id):
@@ -72,26 +77,112 @@ def create_forecast_plot(context_df, pred_df, location_id):
 
 
 def upload_and_analyze(file):
-    """Analyze uploaded file"""
+    """Analyze uploaded file - Now with multi-sheet support"""
     if file is None:
-        return "❌ Please upload a file", None, None
+        return "❌ Please upload a file", None, None, gr.update(choices=[], value=None)
 
     try:
+        # Check if it's a multi-sheet Excel file
+        if file.name.endswith('.xlsx') or file.name.endswith('.xls'):
+            # Try to load with sidecar engine
+            try:
+                excel_file = pd.ExcelFile(file.name)
+                
+                if len(excel_file.sheet_names) > 1:
+                    # Multi-sheet file - use Sidecar Engine
+                    status_report = sidecar_engine.load_excel_file(file.name)
+                    
+                    report = f"## 🗂️ Multi-Sheet Excel File Loaded\n\n"
+                    report += f"**Status:** {status_report['status']}\n\n"
+                    report += f"**File:** {status_report['file']}\n"
+                    report += f"**Sheets Loaded:** {status_report['sheets_loaded']}\n\n"
+                    
+                    if status_report['warnings']:
+                        report += "### ⚠️ Warnings:\n"
+                        for warning in status_report['warnings']:
+                            report += f"- {warning}\n"
+                        report += "\n"
+                    
+                    report += "### 📋 Available Sheets:\n\n"
+                    for sheet_name in status_report['sheet_names']:
+                        report += f"- **{sheet_name}**\n"
+                    
+                    report += "\n✅ **Please select a sheet from the dropdown below to analyze**\n"
+                    
+                    # Return with sheet choices
+                    sheet_choices = status_report['sheet_names']
+                    return report, None, None, gr.update(choices=sheet_choices, value=None)
+                    
+            except Exception as e:
+                # Fall through to single-sheet processing
+                pass
+        
+        # Single sheet or non-Excel file - use original logic
         # Check if Uzbek format
-        df_test = pd.read_excel(file.name, header=None)
+        df_test = pd.read_excel(file.name, header=None) if file.name.endswith(('.xlsx', '.xls')) else None
 
-        if preprocessor.is_uzbek_regional_format(df_test):
+        if df_test is not None and preprocessor.is_uzbek_regional_format(df_test):
             df, report, mapping = preprocessor.process_uzbek_xlsx(file.name)
         else:
             # Standard format
-            df = pd.read_excel(file.name) if file.name.endswith('.xlsx') else pd.read_csv(file.name)
+            df = pd.read_excel(file.name) if file.name.endswith(('.xlsx', '.xls')) else pd.read_csv(file.name)
             report = f"✅ Loaded {len(df)} records\n\nColumns: {', '.join(df.columns)}"
             mapping = {}
 
-        return report, df, mapping
+        return report, df, mapping, gr.update(choices=[], value=None)
 
     except Exception as e:
-        return f"❌ Error: {str(e)}", None, None
+        return f"❌ Error: {str(e)}", None, None, gr.update(choices=[], value=None)
+
+
+def select_sheet(sheet_name):
+    """Handle sheet selection from dropdown"""
+    global current_sheet_data
+    
+    if not sheet_name:
+        return "❌ Please select a sheet", None, None
+    
+    try:
+        # Get sheet data from sidecar engine
+        df_raw = sidecar_engine.get_sheet_data(sheet_name)
+        
+        if df_raw is None:
+            return f"❌ Sheet '{sheet_name}' not found", None, None
+        
+        # Get sheet summary
+        summary = sidecar_engine.get_sheet_summary(sheet_name)
+        
+        # Try to process with Uzbek preprocessor if it looks like Uzbek format
+        if preprocessor.is_uzbek_regional_format(df_raw):
+            # Save temporarily and process
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.xlsx', delete=False) as tmp:
+                temp_path = tmp.name
+            
+            # Write just this sheet to a temporary file
+            with pd.ExcelWriter(temp_path) as writer:
+                df_raw.to_excel(writer, sheet_name='Data', index=False)
+            
+            df, report, mapping = preprocessor.process_uzbek_xlsx(temp_path)
+            
+            # Clean up
+            import os
+            os.unlink(temp_path)
+            
+            summary += "\n\n" + report
+        else:
+            # Standard processing - just use the raw data
+            df = df_raw
+            mapping = {}
+        
+        current_sheet_data = df
+        
+        return summary, df, mapping
+        
+    except Exception as e:
+        import traceback
+        error_msg = f"❌ Error processing sheet: {str(e)}\n\n```\n{traceback.format_exc()}\n```"
+        return error_msg, None, None
 
 
 def generate_forecast(data, horizon):
@@ -152,6 +243,63 @@ def chat_with_llm(message, history, hist_data, pred_data):
         return history + [[message, f"❌ Error: {str(e)}"]]
 
 
+def save_to_drive(hist_data, pred_data, sheet_name):
+    """Save dataset to Google Drive"""
+    if hist_data is None:
+        return "❌ No data to save"
+    
+    try:
+        metadata = {
+            'location_mapping': preprocessor.location_mapping,
+            'sheet_metadata': sidecar_engine.get_sheet_metadata(sheet_name) if sheet_name else {}
+        }
+        
+        save_path = drive_persistence.save_shadow_dataset(
+            historical_data=hist_data,
+            predictions=pred_data,
+            metadata=metadata,
+            sheet_name=sheet_name or "default"
+        )
+        
+        return f"✅ Data saved to Google Drive:\n{save_path}"
+        
+    except Exception as e:
+        return f"❌ Error saving to Drive: {str(e)}"
+
+
+def generate_report(hist_data, pred_data, sheet_name):
+    """Generate HTML/PDF report"""
+    if hist_data is None:
+        return None, "❌ No data to generate report"
+    
+    try:
+        # Get metadata and warnings
+        metadata = sidecar_engine.get_sheet_metadata(sheet_name) if sheet_name else {}
+        warnings = sidecar_engine.warnings if hasattr(sidecar_engine, 'warnings') else []
+        
+        # Generate HTML report
+        html_content = report_generator.generate_html_report(
+            sheet_name=sheet_name or "Data",
+            historical_data=hist_data,
+            predictions=pred_data,
+            metadata=metadata,
+            warnings=warnings
+        )
+        
+        # Save to temporary file
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+            f.write(html_content)
+            temp_path = f.name
+        
+        return temp_path, f"✅ Report generated: {sheet_name or 'Data'}"
+        
+    except Exception as e:
+        import traceback
+        error_msg = f"❌ Error generating report: {str(e)}\n\n{traceback.format_exc()}"
+        return None, error_msg
+
+
 # Build Gradio interface
 with gr.Blocks(title="Chrono_LLM_RAG", theme=gr.themes.Soft()) as demo:
     gr.Markdown("""
@@ -176,14 +324,34 @@ with gr.Blocks(title="Chrono_LLM_RAG", theme=gr.themes.Soft()) as demo:
                 with gr.Column():
                     file_input = gr.File(label="📁 Upload Data (CSV/XLSX)")
                     analyze_btn = gr.Button("🔍 Analyze", variant="primary")
+                    
+                    # Sheet selector for multi-sheet Excel files
+                    sheet_selector = gr.Dropdown(
+                        label="📑 Select Sheet (for multi-sheet files)",
+                        choices=[],
+                        value=None,
+                        interactive=True
+                    )
+                    select_sheet_btn = gr.Button("📂 Load Selected Sheet", variant="secondary")
 
                     horizon_slider = gr.Slider(1, 20, value=4, step=1, label="Forecast Horizon")
                     forecast_btn = gr.Button("🚀 Generate Forecast", variant="primary")
+                    
+                    # Day 2 Features
+                    gr.Markdown("### 💾 Persistence & Reports")
+                    with gr.Row():
+                        save_drive_btn = gr.Button("💾 Save to Google Drive", variant="secondary")
+                        report_btn = gr.Button("📄 Generate Report", variant="secondary")
 
                 with gr.Column():
                     analysis_output = gr.Markdown()
                     forecast_output = gr.Markdown()
                     plot_output = gr.Plot()
+                    
+                    # Outputs for Day 2 features
+                    save_status = gr.Markdown()
+                    report_file = gr.File(label="📥 Download Report")
+                    report_status = gr.Markdown()
 
         # Tab 2: AI Chat
         with gr.Tab("🤖 AI Analysis"):
@@ -210,6 +378,12 @@ with gr.Blocks(title="Chrono_LLM_RAG", theme=gr.themes.Soft()) as demo:
     analyze_btn.click(
         upload_and_analyze,
         inputs=[file_input],
+        outputs=[analysis_output, data_state, mapping_state, sheet_selector]
+    )
+    
+    select_sheet_btn.click(
+        select_sheet,
+        inputs=[sheet_selector],
         outputs=[analysis_output, data_state, mapping_state]
     )
 
@@ -217,6 +391,19 @@ with gr.Blocks(title="Chrono_LLM_RAG", theme=gr.themes.Soft()) as demo:
         generate_forecast,
         inputs=[data_state, horizon_slider],
         outputs=[forecast_output, predictions_state, plot_output]
+    )
+    
+    # Day 2 Feature Handlers
+    save_drive_btn.click(
+        save_to_drive,
+        inputs=[data_state, predictions_state, sheet_selector],
+        outputs=[save_status]
+    )
+    
+    report_btn.click(
+        generate_report,
+        inputs=[data_state, predictions_state, sheet_selector],
+        outputs=[report_file, report_status]
     )
 
     load_llm_btn.click(

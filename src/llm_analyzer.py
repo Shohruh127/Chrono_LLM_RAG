@@ -18,14 +18,14 @@ class LLMAnalyzer:
     """LLM-based analysis with RAG integration"""
 
     def __init__(self,
-                 model_name: str = "behbudiy/Mistral-7B-Instruct-Uz",
+                 model_name: str = "behbudiy/Llama-3.1-8B-Uz",
                  rag_system=None,
                  config_path: str = "configs/prompts.yaml"):
         """
         Initialize LLM analyzer
         
         Args:
-            model_name: Hugging Face model name
+            model_name: Hugging Face model name (default: behbudiy/Llama-3.1-8B-Uz for Uzbek cultural context)
             rag_system: RAG system instance
             config_path: Path to prompts configuration
         """
