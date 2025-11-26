@@ -30,6 +30,38 @@ class UncertaintyFlagger:
         self.high_threshold = high_threshold
         self.medium_threshold = medium_threshold
     
+    def _calculate_divergence(self, chronos_val: float, ets_val: float) -> float:
+        """
+        Calculate percentage divergence between two values.
+        
+        Args:
+            chronos_val: Chronos forecast value
+            ets_val: ETS forecast value
+            
+        Returns:
+            Divergence as a decimal (0.20 = 20%)
+        """
+        # Use max of absolute values to handle negative numbers properly
+        denominator = max(abs(chronos_val), abs(ets_val), 1e-6)
+        return abs(chronos_val - ets_val) / denominator
+    
+    def _get_flag(self, divergence: float) -> tuple:
+        """
+        Determine uncertainty flag and review requirement.
+        
+        Args:
+            divergence: Divergence value (decimal)
+            
+        Returns:
+            Tuple of (flag_str, requires_review_bool)
+        """
+        if divergence > self.high_threshold:
+            return "HIGH", True
+        elif divergence > self.medium_threshold:
+            return "MEDIUM", False
+        else:
+            return "LOW", False
+    
     def compare(self, chronos_result: Dict, ets_result: Dict) -> Dict:
         """
         Point-by-point comparison of Chronos vs ETS forecasts.
@@ -67,20 +99,12 @@ class UncertaintyFlagger:
             chronos_val = chronos_median[i]
             ets_val = ets_median[i]
             
-            # Calculate divergence
-            divergence = abs(chronos_val - ets_val) / max(abs(ets_val), 1e-6)
+            # Calculate divergence using helper
+            divergence = self._calculate_divergence(chronos_val, ets_val)
             divergence_pct = divergence * 100
             
             # Determine flag
-            if divergence > self.high_threshold:
-                flag = "HIGH"
-                requires_review = True
-            elif divergence > self.medium_threshold:
-                flag = "MEDIUM"
-                requires_review = False
-            else:
-                flag = "LOW"
-                requires_review = False
+            flag, requires_review = self._get_flag(divergence)
             
             comparison[f"step_{i+1}"] = {
                 "chronos": chronos_val,
@@ -124,20 +148,12 @@ class UncertaintyFlagger:
             chronos_val = row[chronos_col]
             ets_val = row[ets_col]
             
-            # Calculate divergence
-            divergence = abs(chronos_val - ets_val) / max(abs(ets_val), 1e-6)
+            # Calculate divergence using helper
+            divergence = self._calculate_divergence(chronos_val, ets_val)
             divergence_pct = divergence * 100
             
             # Determine flag
-            if divergence > self.high_threshold:
-                flag = "HIGH"
-                requires_review = True
-            elif divergence > self.medium_threshold:
-                flag = "MEDIUM"
-                requires_review = False
-            else:
-                flag = "LOW"
-                requires_review = False
+            flag, requires_review = self._get_flag(divergence)
             
             divergences.append(divergence_pct)
             flags.append(flag)

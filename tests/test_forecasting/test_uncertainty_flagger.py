@@ -135,8 +135,8 @@ class TestUncertaintyFlagger:
         
         comparison = self.flagger.compare(chronos, ets)
         
-        # Divergence should be |100-80|/80 = 0.25 = 25%
-        assert abs(comparison['step_1']['divergence_pct'] - 25.0) < 0.01
+        # Divergence should be |100-80|/max(100, 80) = 20/100 = 0.20 = 20%
+        assert abs(comparison['step_1']['divergence_pct'] - 20.0) < 0.01
     
     def test_compare_zero_ets_value(self):
         """Test comparison when ETS value is zero (edge case)"""

@@ -12,6 +12,15 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+# Try to import torch and Chronos at module level
+try:
+    import torch
+    from chronos import ChronosPipeline
+    CHRONOS_AVAILABLE = True
+except ImportError:
+    CHRONOS_AVAILABLE = False
+    warnings.warn("Chronos/torch not available, will use fallback predictions")
+
 
 class ChronosEngine:
     """
@@ -33,21 +42,19 @@ class ChronosEngine:
         
     def _lazy_load_pipeline(self):
         """Lazy load the Chronos pipeline when needed."""
-        if self.pipeline is None:
+        if self.pipeline is None and CHRONOS_AVAILABLE:
             try:
-                from chronos import ChronosPipeline
-                import torch
-                
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 self.pipeline = ChronosPipeline.from_pretrained(
                     self.model_id,
                     device_map=device,
                     torch_dtype=torch.bfloat16 if device == "cuda" else torch.float32
                 )
-            except ImportError:
-                # Fallback for testing without chronos installed
+            except Exception as e:
                 self.pipeline = None
-                warnings.warn("Chronos not available, using fallback predictions")
+                warnings.warn(f"Failed to load Chronos pipeline: {e}")
+        elif not CHRONOS_AVAILABLE:
+            self.pipeline = None
     
     def forecast(self, series: pd.Series, horizon: int = 2) -> Dict:
         """
@@ -93,21 +100,21 @@ class ChronosEngine:
             for q in self.quantiles:
                 quantile_values[f"quantile_{int(q*100)}"] = forecast_result.quantile(q, dim=1).squeeze().tolist()
             
+            median = quantile_values.get("quantile_50", forecast_result.median(dim=1).squeeze().tolist())
+            quantile_10 = quantile_values.get("quantile_10", [])
+            quantile_90 = quantile_values.get("quantile_90", [])
+            
+            # Ensure lists are proper format
+            if not isinstance(median, list):
+                median = [median]
+            
             result = {
-                "median": quantile_values.get("quantile_50", forecast_result.median(dim=1).squeeze().tolist()),
-                "quantile_10": quantile_values.get("quantile_10", []),
-                "quantile_90": quantile_values.get("quantile_90", []),
+                "median": median,
+                "quantile_10": quantile_10 if quantile_10 else median,
+                "quantile_90": quantile_90 if quantile_90 else median,
                 "horizon": horizon,
                 "model_version": self.model_id
             }
-            
-            # Ensure lists are proper format
-            if not isinstance(result["median"], list):
-                result["median"] = [result["median"]]
-            if not result["quantile_10"]:
-                result["quantile_10"] = result["median"]
-            if not result["quantile_90"]:
-                result["quantile_90"] = result["median"]
                 
             return result
             
