@@ -1,49 +1,120 @@
-# Model Configuration
+# =============================================================================
+# configs/models_config.yaml - Tri-Force Model Stack Configuration
 # Created by: Shohruh127
-# Date: 2025-11-26
-# Repository ID: 1099678425
+# Repository: Shohruh127/Chrono_LLM_RAG
+# =============================================================================
 
-# Tri-Force Model Stack Configuration
+# VRAM Management
+vram_budget_gb: 30.0  # Maximum VRAM usage (A100 has 40-80GB)
 
+# ============================================================================
+# Forecaster: Chronos-T5-Base
+# Purpose: Zero-shot time series forecasting for small economic data
+# Estimated VRAM: ~2GB (base model, no quantization needed)
+# ============================================================================
 forecaster:
-  name: "amazon/chronos-2"
-  description: "Time-Series Foundation Model for forecasting"
-  device: "cuda"
+  model_id: "amazon/chronos-t5-base"
+  use_quantization: false  # Chronos models use different loading mechanism
+  max_context_length: 512
+  prediction_length: 4
+  quantile_levels: [0.1, 0.5, 0.9]
+  num_samples: 20
   dtype: "bfloat16"
-  batch_size: 256
 
-analyst:
-  name: "behbudiy/Llama-3.1-8B-Uz"
-  description: "Uzbek Cultural Context - Language Analysis"
-  device: "auto"
-  use_4bit: true
-  max_tokens: 800
+# ============================================================================
+# Logic Engineer: Qwen2.5-Coder-7B
+# Purpose: Python code generation and logic reasoning
+# Estimated VRAM: ~4.5GB with NF4 quantization
+# ============================================================================
+logic_engineer:
+  model_id: "Qwen/Qwen2.5-Coder-7B"
+  use_quantization: true
+  quantization_type: "nf4"
+  compute_dtype: "float16"
+  max_new_tokens: 1024
   temperature: 0.3
+  top_p: 0.9
+  repetition_penalty: 1.1
+  max_context_length: 4096
 
-engineer:
-  name: "Qwen/Qwen2.5-Coder-7B-Instruct"
-  description: "SOTA Python Generation - Logic and Code"
-  device: "auto"
-  use_4bit: true
-  max_tokens: 800
-  temperature: 0.2
+# ============================================================================
+# Cultural Analyst: Llama-3.1-8B-Uz
+# Purpose: Uzbek linguistic nuance and tone analysis
+# Estimated VRAM: ~5GB with NF4 quantization
+# ============================================================================
+cultural_analyst:
+  model_id: "behbudiy/Llama-3.1-8B-Uz"
+  use_quantization: true
+  quantization_type: "nf4"
+  compute_dtype: "float16"
+  max_new_tokens: 800
+  temperature: 0.5
+  top_p: 0.85
+  repetition_penalty: 1.3
+  max_context_length: 4096
 
-# Model Selection Strategy
-# - Use Chronos-2 for all time series forecasting
-# - Use Llama-3.1-8B-Uz for natural language understanding with Uzbek cultural context
-# - Use Qwen2.5-Coder for code generation (PAL pattern) to avoid arithmetic hallucinations
-
-# Integration Fixes Applied
-integration_fixes:
-  chronos:
-    - "Use CPU pipelining - let pipeline handle device mapping"
-    - "No manual .to(device) calls"
-    - "Apply .unsqueeze(0).unsqueeze(0) for tensor dimension alignment"
+# ============================================================================
+# Quantization Settings (bitsandbytes)
+# ============================================================================
+quantization:
+  # NF4 (NormalFloat4) - Most memory efficient
+  nf4:
+    load_in_4bit: true
+    bnb_4bit_quant_type: "nf4"
+    bnb_4bit_use_double_quant: true
+    bnb_4bit_compute_dtype: "float16"
   
-  gradio:
-    - "Use list of dicts format for chat history"
-    - "ChatMessage API: [{'role': 'user', 'content': '...'}]"
+  # INT8 - Faster but uses more memory
+  int8:
+    load_in_8bit: true
+    llm_int8_threshold: 6.0
+
+# ============================================================================
+# Query Routing Keywords
+# ============================================================================
+routing:
+  forecast_keywords:
+    - "forecast"
+    - "predict"
+    - "bashorat"
+    - "prognoz"
+    - "trend"
+    - "future"
+    - "projection"
+    - "estimate"
+    - "time series"
+    - "vaqt qatori"
   
-  data:
-    - "Sanitize duplicate column names before processing"
-    - "Use DictionaryIngestionEngine to keep sheets separate"
+  code_keywords:
+    - "code"
+    - "python"
+    - "calculate"
+    - "compute"
+    - "function"
+    - "algorithm"
+    - "script"
+    - "program"
+    - "formula"
+    - "hisoblash"
+    - "kod"
+  
+  cultural_keywords:
+    - "uzbek"
+    - "o'zbek"
+    - "toshkent"
+    - "uzbekistan"
+    - "madaniyat"
+    - "til"
+    - "language"
+    - "cultural"
+    - "translate"
+    - "tarjima"
+    - "matn"
+
+# ============================================================================
+# Hardware Detection
+# ============================================================================
+hardware:
+  preferred_device: "cuda"  # cuda, cpu, or auto
+  fallback_to_cpu: true
+  cache_dir: "models/cache"
