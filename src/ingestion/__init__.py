@@ -176,7 +176,8 @@ def ingest_file(
 def ingest_all_sheets(
     filepath: Union[str, Path],
     detect_header: bool = True,
-    split_data: bool = True
+    split_data: bool = True,
+    use_fallback_on_error: bool = True
 ) -> Dict[str, Dict[str, Any]]:
     """
     Ingest all sheets from an Excel file.
@@ -185,6 +186,7 @@ def ingest_all_sheets(
         filepath: Path to Excel file
         detect_header: Whether to auto-detect header row
         split_data: Whether to split data from metadata footer
+        use_fallback_on_error: Whether to use FallbackLoader on errors
         
     Returns:
         Dictionary mapping sheet names to ingest_file results
@@ -203,7 +205,8 @@ def ingest_all_sheets(
             filepath,
             sheet=sheet_name,
             detect_header=detect_header,
-            split_data=split_data
+            split_data=split_data,
+            use_fallback_on_error=use_fallback_on_error
         )
         
     return results

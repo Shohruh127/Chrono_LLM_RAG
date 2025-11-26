@@ -59,6 +59,25 @@ class SidecarSplitter:
         self.min_data_rows = min_data_rows
         self.empty_row_threshold = empty_row_threshold
         self.numeric_column_threshold = numeric_column_threshold
+    
+    def _parse_numeric_value(self, val: Any) -> Optional[float]:
+        """
+        Parse a value as a numeric, handling locale-specific formats.
+        
+        Args:
+            val: Value to parse
+            
+        Returns:
+            Float value if parseable, None otherwise
+        """
+        if pd.isna(val):
+            return None
+        try:
+            # Handle comma decimal separators and space thousands separators
+            normalized = str(val).replace(',', '.').replace(' ', '')
+            return float(normalized)
+        except (ValueError, TypeError):
+            return None
         
     def _is_numeric_row(self, row: pd.Series) -> bool:
         """
@@ -76,12 +95,8 @@ class SidecarSplitter:
         for val in row:
             if pd.notna(val):
                 non_null_count += 1
-                try:
-                    # Try to convert to float
-                    float(str(val).replace(',', '.').replace(' ', ''))
+                if self._parse_numeric_value(val) is not None:
                     numeric_count += 1
-                except (ValueError, TypeError):
-                    pass
                     
         if non_null_count == 0:
             return False

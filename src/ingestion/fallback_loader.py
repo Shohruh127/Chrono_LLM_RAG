@@ -143,16 +143,18 @@ class FallbackLoader:
         sheet: Union[str, int] = 0
     ) -> Optional[pd.DataFrame]:
         """
-        Last resort: try to read as CSV if Excel parsing fails completely.
+        Last resort: try to read CSV files with multiple encodings.
         
-        This is mainly for debugging malformed files.
+        This method only handles CSV files as a fallback for when
+        a CSV file is passed to the loader. For Excel files (.xlsx/.xls),
+        this method returns None.
         
         Args:
             filepath: Path to file
-            sheet: Ignored for CSV
+            sheet: Ignored for CSV files
             
         Returns:
-            DataFrame if successful, None otherwise
+            DataFrame if successful (only for CSV files), None otherwise
         """
         if filepath.suffix.lower() == '.csv':
             try:

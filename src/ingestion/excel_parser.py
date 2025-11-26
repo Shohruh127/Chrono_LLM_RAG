@@ -151,9 +151,9 @@ class ExcelParser:
             DataFrame with forward-filled values
         """
         # Forward fill along rows for merged header cells
-        df = df.ffill(axis=1).infer_objects(copy=False)
+        df = df.ffill(axis=1)
         # Also forward fill along columns for vertically merged cells
-        df = df.ffill(axis=0).infer_objects(copy=False)
+        df = df.ffill(axis=0)
         return df
     
     def parse_sheet(
