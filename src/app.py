@@ -23,6 +23,8 @@ from src.chronos_forecaster import ChronosForecaster
 from src.rag_system import RAGSystem
 from src.llm_analyzer import LLMAnalyzer
 from src.sidecar_engine import DictionaryIngestionEngine
+from src.report_generator import ReportGenerator
+from src.drive_persistence import DrivePersistence
 
 
 # Initialize components
@@ -31,6 +33,8 @@ forecaster = ChronosForecaster()
 rag_system = RAGSystem()
 llm_analyzer = LLMAnalyzer(rag_system=rag_system)
 sidecar_engine = DictionaryIngestionEngine()
+report_generator = ReportGenerator()
+drive_persistence = DrivePersistence()
 
 # Global state
 llm_loaded = False
@@ -241,6 +245,63 @@ def chat_with_llm(message, history, hist_data, pred_data):
         return history + [[message, f"❌ Error: {str(e)}"]]
 
 
+def save_to_drive(hist_data, pred_data, sheet_name):
+    """Save dataset to Google Drive"""
+    if hist_data is None:
+        return "❌ No data to save"
+    
+    try:
+        metadata = {
+            'location_mapping': preprocessor.location_mapping,
+            'sheet_metadata': sidecar_engine.get_sheet_metadata(sheet_name) if sheet_name else {}
+        }
+        
+        save_path = drive_persistence.save_shadow_dataset(
+            historical_data=hist_data,
+            predictions=pred_data,
+            metadata=metadata,
+            sheet_name=sheet_name or "default"
+        )
+        
+        return f"✅ Data saved to Google Drive:\n{save_path}"
+        
+    except Exception as e:
+        return f"❌ Error saving to Drive: {str(e)}"
+
+
+def generate_report(hist_data, pred_data, sheet_name):
+    """Generate HTML/PDF report"""
+    if hist_data is None:
+        return None, "❌ No data to generate report"
+    
+    try:
+        # Get metadata and warnings
+        metadata = sidecar_engine.get_sheet_metadata(sheet_name) if sheet_name else {}
+        warnings = sidecar_engine.warnings if hasattr(sidecar_engine, 'warnings') else []
+        
+        # Generate HTML report
+        html_content = report_generator.generate_html_report(
+            sheet_name=sheet_name or "Data",
+            historical_data=hist_data,
+            predictions=pred_data,
+            metadata=metadata,
+            warnings=warnings
+        )
+        
+        # Save to temporary file
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+            f.write(html_content)
+            temp_path = f.name
+        
+        return temp_path, f"✅ Report generated: {sheet_name or 'Data'}"
+        
+    except Exception as e:
+        import traceback
+        error_msg = f"❌ Error generating report: {str(e)}\n\n{traceback.format_exc()}"
+        return None, error_msg
+
+
 # Build Gradio interface
 with gr.Blocks(title="Chrono_LLM_RAG", theme=gr.themes.Soft()) as demo:
     gr.Markdown("""
@@ -277,11 +338,22 @@ with gr.Blocks(title="Chrono_LLM_RAG", theme=gr.themes.Soft()) as demo:
 
                     horizon_slider = gr.Slider(1, 20, value=4, step=1, label="Forecast Horizon")
                     forecast_btn = gr.Button("🚀 Generate Forecast", variant="primary")
+                    
+                    # Day 2 Features
+                    gr.Markdown("### 💾 Persistence & Reports")
+                    with gr.Row():
+                        save_drive_btn = gr.Button("💾 Save to Google Drive", variant="secondary")
+                        report_btn = gr.Button("📄 Generate Report", variant="secondary")
 
                 with gr.Column():
                     analysis_output = gr.Markdown()
                     forecast_output = gr.Markdown()
                     plot_output = gr.Plot()
+                    
+                    # Outputs for Day 2 features
+                    save_status = gr.Markdown()
+                    report_file = gr.File(label="📥 Download Report")
+                    report_status = gr.Markdown()
 
         # Tab 2: AI Chat
         with gr.Tab("🤖 AI Analysis"):
@@ -321,6 +393,19 @@ with gr.Blocks(title="Chrono_LLM_RAG", theme=gr.themes.Soft()) as demo:
         generate_forecast,
         inputs=[data_state, horizon_slider],
         outputs=[forecast_output, predictions_state, plot_output]
+    )
+    
+    # Day 2 Feature Handlers
+    save_drive_btn.click(
+        save_to_drive,
+        inputs=[data_state, predictions_state, sheet_selector],
+        outputs=[save_status]
+    )
+    
+    report_btn.click(
+        generate_report,
+        inputs=[data_state, predictions_state, sheet_selector],
+        outputs=[report_file, report_status]
     )
 
     load_llm_btn.click(
