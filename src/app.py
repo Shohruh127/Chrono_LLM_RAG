@@ -23,6 +23,7 @@ from src.chronos_forecaster import ChronosForecaster
 from src.rag_system import RAGSystem
 from src.llm_analyzer import LLMAnalyzer
 from src.selector import SheetManager, ContextPropagator
+from src.selector.ui_components import create_domain_badge
 
 
 # Initialize components
@@ -179,22 +180,14 @@ def select_domain(dropdown_value, sheets_data):
         # Set context
         context_propagator.set_context(matching_sheet, df, domain)
 
-        # Create domain badge
-        badge_html = f"""
-        <div style="padding: 15px; border-radius: 8px; background: linear-gradient(135deg, #4CAF50 0%, #4CAF50dd 100%); box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <div style="color: white; font-size: 18px; font-weight: bold; margin-bottom: 5px;">
-                🏷️ Selected Domain: {domain}
-            </div>
-            <div style="color: rgba(255,255,255,0.9); font-size: 14px;">
-                📊 Sheet: {matching_sheet}
-            </div>
-            <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 5px;">
-                📐 {len(df)} rows × {len(df.columns)} columns
-            </div>
-        </div>
-        """
+        # Create domain badge using centralized function
+        badge_html = create_domain_badge(context_propagator)
 
-        msg = f"✅ **Domain selected successfully!**\n\n- **Domain:** {domain}\n- **Sheet:** {matching_sheet}\n- **Data:** {len(df)} rows × {len(df.columns)} columns\n\n🚀 You can now proceed to forecasting!"
+        msg = (
+            f"✅ **Domain selected successfully!**\n\n- **Domain:** {domain}\n"
+            f"- **Sheet:** {matching_sheet}\n- **Data:** {len(df)} rows × {len(df.columns)} columns\n\n"
+            f"🚀 You can now proceed to forecasting!"
+        )
 
         return msg, df, gr.update(value=badge_html)
 

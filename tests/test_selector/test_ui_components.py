@@ -31,7 +31,7 @@ def test_create_sheet_preview(test_excel_file):
     """Test creating sheet preview"""
     manager = SheetManager(test_excel_file)
 
-    preview = create_sheet_preview(manager, "1-Agriculture", rows=1)
+    preview = create_sheet_preview(manager, "1-Agriculture", max_rows=1)
 
     assert isinstance(preview, pd.DataFrame)
     assert len(preview) == 1
@@ -42,7 +42,7 @@ def test_create_sheet_preview_invalid_sheet(test_excel_file):
     """Test preview with invalid sheet"""
     manager = SheetManager(test_excel_file)
 
-    preview = create_sheet_preview(manager, "Invalid", rows=5)
+    preview = create_sheet_preview(manager, "Invalid", max_rows=5)
 
     # Should return error DataFrame
     assert isinstance(preview, pd.DataFrame)
@@ -142,7 +142,7 @@ def test_sheet_preview_max_rows(test_excel_file):
     manager = SheetManager(test_excel_file)
 
     # File has 2 rows, request 10
-    preview = create_sheet_preview(manager, "1-Agriculture", rows=10)
+    preview = create_sheet_preview(manager, "1-Agriculture", max_rows=10)
 
     # Should only return available rows
     assert len(preview) <= 10

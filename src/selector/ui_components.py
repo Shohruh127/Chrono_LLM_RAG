@@ -41,20 +41,20 @@ def create_sheet_dropdown(sheet_manager: SheetManager) -> gr.Dropdown:
     )
 
 
-def create_sheet_preview(sheet_manager: SheetManager, sheet_name: str, rows: int = 5) -> pd.DataFrame:
+def create_sheet_preview(sheet_manager: SheetManager, sheet_name: str, max_rows: int = 5) -> pd.DataFrame:
     """
     Create preview table component.
 
     Args:
         sheet_manager: SheetManager instance
         sheet_name: Name of sheet to preview
-        rows: Number of rows to preview (default: 5)
+        max_rows: Maximum number of rows to preview (default: 5)
 
     Returns:
         DataFrame for preview
     """
     try:
-        preview_df = sheet_manager.get_sheet_preview(sheet_name, rows=rows)
+        preview_df = sheet_manager.get_sheet_preview(sheet_name, max_rows=max_rows)
         return preview_df
     except Exception as e:
         print(f"Error creating preview: {e}")

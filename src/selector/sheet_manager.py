@@ -97,13 +97,13 @@ class SheetManager:
 
         return sheets
 
-    def get_sheet_preview(self, sheet_name: str, rows: int = 5) -> pd.DataFrame:
+    def get_sheet_preview(self, sheet_name: str, max_rows: int = 5) -> pd.DataFrame:
         """
         Return preview of sheet data.
 
         Args:
             sheet_name: Name of the sheet to preview
-            rows: Number of rows to preview (default: 5)
+            max_rows: Maximum number of rows to preview (default: 5)
 
         Returns:
             DataFrame with preview data
@@ -113,7 +113,7 @@ class SheetManager:
                 f"Sheet '{sheet_name}' not found in file. Available sheets: {self._excel_file.sheet_names}"
             )
 
-        df = pd.read_excel(self.filepath, sheet_name=sheet_name, nrows=rows)
+        df = pd.read_excel(self.filepath, sheet_name=sheet_name, nrows=max_rows)
         return df
 
     def select_sheet(self, sheet_name: str) -> pd.DataFrame:

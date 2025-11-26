@@ -137,7 +137,7 @@ def test_get_sheet_preview(test_excel_file):
     """Test getting sheet preview"""
     manager = SheetManager(test_excel_file)
 
-    preview = manager.get_sheet_preview("7-Qishloq xo'jaligi", rows=2)
+    preview = manager.get_sheet_preview("7-Qishloq xo'jaligi", max_rows=2)
     assert isinstance(preview, pd.DataFrame)
     assert len(preview) == 2
     assert "Region" in preview.columns
