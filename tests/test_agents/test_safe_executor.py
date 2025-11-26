@@ -8,7 +8,13 @@
 import pytest
 import pandas as pd
 import numpy as np
-from src.agents.safe_executor import SafeExecutor
+import sys
+from pathlib import Path
+
+# Add src to path for direct imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+
+from agents.safe_executor import SafeExecutor
 
 
 class TestSafeExecutor:

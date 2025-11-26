@@ -6,7 +6,13 @@
 # =============================================================================
 
 import pytest
-from src.agents.query_translator import QueryTranslator
+import sys
+from pathlib import Path
+
+# Add src to path for direct imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+
+from agents.query_translator import QueryTranslator
 
 
 class TestQueryTranslator:

@@ -148,7 +148,7 @@ class QueryTranslator:
             intent['operation'] = 'max'
         elif any(word in query_lower for word in ['minimum', 'min', 'lowest', 'eng kichik']):
             intent['operation'] = 'min'
-        elif any(word in query_lower for word in ['count', 'number of']):
+        elif any(word in query_lower for word in ['count', 'number of', 'how many']):
             intent['operation'] = 'count'
         
         # Extract year filter
@@ -157,12 +157,27 @@ class QueryTranslator:
             year = int(year_match.group(1))
             intent['filter'] = {'year': year}
         
-        # Extract column name (simple heuristic)
-        data_keywords = ['production', 'yield', 'output', 'agriculture', 'industry', 'trade']
-        for keyword in data_keywords:
+        # Extract column name (simple heuristic) - look at words before operation
+        data_keywords = {
+            'agriculture': 'agriculture',
+            'agricultural': 'agriculture', 
+            'production': 'production',
+            'yield': 'yield',
+            'output': 'output',
+            'industry': 'industry',
+            'trade': 'trade'
+        }
+        
+        # Find all matching keywords and return the first/primary one
+        found_keywords = []
+        for keyword, col_name in data_keywords.items():
             if keyword in query_lower:
-                intent['column'] = keyword
-                break
+                found_keywords.append((query_lower.index(keyword), col_name))
+        
+        # Sort by position and take first (earliest in query)
+        if found_keywords:
+            found_keywords.sort(key=lambda x: x[0])
+            intent['column'] = found_keywords[0][1]
         
         return intent
 
@@ -196,9 +211,6 @@ Requirements:
 3. Do NOT print anything or use display functions
 4. Keep the code simple and efficient
 5. Use proper filtering and aggregation
-
-Example:
-result = df[df['Year'] == 2023]['Production'].sum()
 
 Generate the code:"""
         

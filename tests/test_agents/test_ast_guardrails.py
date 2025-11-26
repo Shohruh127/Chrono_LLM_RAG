@@ -6,7 +6,13 @@
 # =============================================================================
 
 import pytest
-from src.agents.ast_guardrails import ASTGuardrails
+import sys
+from pathlib import Path
+
+# Add src to path for direct imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+
+from agents.ast_guardrails import ASTGuardrails
 
 
 class TestASTGuardrails:

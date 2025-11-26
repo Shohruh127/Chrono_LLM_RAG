@@ -223,10 +223,14 @@ class SovereignAgent:
         Returns:
             Human-readable cell reference
         """
-        # Extract column name from code
-        col_match = re.search(r'\[[\'"]([\w\s]+)[\'"]\]', code)
-        if col_match:
-            column = col_match.group(1)
+        # Extract column name from code - look for patterns like ['column_name']
+        col_matches = re.findall(r'\[[\'"](\w+)[\'"]\]', code)
+        
+        # Get the last column mentioned (usually the one being aggregated)
+        if len(col_matches) >= 2:
+            column = col_matches[-1]  # Last column is usually the data column
+        elif col_matches:
+            column = col_matches[0]
         else:
             column = "target"
         

@@ -59,24 +59,47 @@ class TriForceStack:
         import re
         year_match = re.search(r'\b(20\d{2})\b', prompt)
         
+        # Extract the actual query from the prompt
+        query_match = re.search(r'Query:\s*(.+?)(?:\n|$)', prompt)
+        query_text = query_match.group(1).lower() if query_match else prompt.lower()
+        
+        # Extract column hints from the query text specifically
+        # Check for specific column names in order of specificity
+        column = 'target'  # default
+        
+        if re.search(r'\btarget\b', query_text):
+            column = 'target'
+        elif re.search(r'\bproduction\b', query_text) or re.search(r'\boutput\b', query_text):
+            column = 'Production'
+        elif re.search(r'\byield\b', query_text):
+            column = 'yield'
+        elif re.search(r'\bagriculture\b', query_text):
+            column = 'Agriculture'
+        
         if 'sum' in prompt.lower() or 'total' in prompt.lower():
             if year_match:
                 year = year_match.group(1)
-                return f"result = df[df['Year'] == {year}]['target'].sum()"
-            return "result = df['target'].sum()"
+                return f"result = df[df['Year'] == {year}]['{column}'].sum()"
+            return f"result = df['{column}'].sum()"
         
         elif 'average' in prompt.lower() or 'mean' in prompt.lower():
             if year_match:
                 year = year_match.group(1)
-                return f"result = df[df['Year'] == {year}]['target'].mean()"
-            return "result = df['target'].mean()"
+                return f"result = df[df['Year'] == {year}]['{column}'].mean()"
+            return f"result = df['{column}'].mean()"
         
-        elif 'max' in prompt.lower() or 'maximum' in prompt.lower():
-            return "result = df['target'].max()"
+        elif 'max' in prompt.lower() or 'maximum' in prompt.lower() or 'highest' in prompt.lower():
+            if year_match:
+                year = year_match.group(1)
+                return f"result = df[df['Year'] == {year}]['{column}'].max()"
+            return f"result = df['{column}'].max()"
         
-        elif 'min' in prompt.lower() or 'minimum' in prompt.lower():
-            return "result = df['target'].min()"
+        elif 'min' in prompt.lower() or 'minimum' in prompt.lower() or 'lowest' in prompt.lower():
+            if year_match:
+                year = year_match.group(1)
+                return f"result = df[df['Year'] == {year}]['{column}'].min()"
+            return f"result = df['{column}'].min()"
         
         else:
             # Default: return sum
-            return "result = df['target'].sum()"
+            return f"result = df['{column}'].sum()"
