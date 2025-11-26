@@ -8,16 +8,37 @@ __author__ = "Shohruh127"
 __repository__ = "Chrono_LLM_RAG"
 __repo_id__ = "1099678425"
 
-from .data_loader import DataLoader
-from .preprocessor import UzbekXLSXPreprocessor
-from .chronos_forecaster import ChronosForecaster
-from .rag_system import RAGSystem
-from .llm_analyzer import LLMAnalyzer
-
+# All imports are lazy to avoid heavy dependencies on module load
 __all__ = [
     "DataLoader",
     "UzbekXLSXPreprocessor",
     "ChronosForecaster",
     "RAGSystem",
-    "LLMAnalyzer"
+    "LLMAnalyzer",
 ]
+
+
+def __getattr__(name):
+    """Lazy loading of all modules"""
+    if name == "DataLoader":
+        from .data_loader import DataLoader
+
+        return DataLoader
+    elif name == "UzbekXLSXPreprocessor":
+        from .preprocessor import UzbekXLSXPreprocessor
+
+        return UzbekXLSXPreprocessor
+    elif name == "ChronosForecaster":
+        from .chronos_forecaster import ChronosForecaster
+
+        return ChronosForecaster
+    elif name == "RAGSystem":
+        from .rag_system import RAGSystem
+
+        return RAGSystem
+    elif name == "LLMAnalyzer":
+        from .llm_analyzer import LLMAnalyzer
+
+        return LLMAnalyzer
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+

@@ -19,6 +19,17 @@ forecasting:
   quantile_levels: [0.1, 0.5, 0.9]
   batch_size: 256
   num_samples: 100
+  chronos:
+    model_id: "amazon/chronos-t5-base"
+    quantiles: [0.1, 0.5, 0.9]
+    default_horizon: 2
+  ets:
+    auto_select: true
+    fallback_to_simple: true
+  uncertainty:
+    high_threshold: 0.20
+    medium_threshold: 0.10
+    require_review_on_high: true
 
 preprocessing:
   fill_missing: true
