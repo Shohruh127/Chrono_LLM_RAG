@@ -1,0 +1,325 @@
+# =============================================================================
+# configs/security_config.yaml - Security Configuration for AST Guardrails
+# Created by: Shohruh127
+# Repository: Shohruh127/Chrono_LLM_RAG
+# =============================================================================
+
+# ============================================================================
+# Blocked Imports - Dangerous modules that should not be executed
+# ============================================================================
+blocked_imports:
+  # System access
+  - os
+  - sys
+  - subprocess
+  - shutil
+  - pathlib  # Can be used for file system traversal
+  
+  # Network access
+  - socket
+  - urllib
+  - urllib2
+  - urllib3
+  - requests
+  - httplib
+  - ftplib
+  - smtplib
+  - telnetlib
+  - http.client
+  - http.server
+  - socketserver
+  
+  # Process control
+  - multiprocessing
+  - threading
+  - concurrent
+  - asyncio
+  
+  # Code execution
+  - exec
+  - eval
+  - compile
+  - code
+  - codeop
+  - importlib
+  - __import__
+  - runpy
+  
+  # File I/O
+  - io
+  - open
+  - file
+  - tempfile
+  
+  # Pickle (arbitrary code execution)
+  - pickle
+  - cPickle
+  - dill
+  - cloudpickle
+  
+  # Command execution
+  - pty
+  - popen
+  - popen2
+  - commands
+  
+  # Debugging/introspection
+  - inspect
+  - dis
+  - gc
+  - ctypes
+  - cffi
+  
+  # Security sensitive
+  - ssl
+  - hashlib
+  - hmac
+  - secrets
+  - cryptography
+
+# ============================================================================
+# Allowed Pandas Operations - Safe data manipulation functions
+# ============================================================================
+allowed_pandas_operations:
+  # Data selection
+  - head
+  - tail
+  - iloc
+  - loc
+  - at
+  - iat
+  - sample
+  
+  # Basic operations
+  - shape
+  - columns
+  - index
+  - values
+  - dtypes
+  - info
+  - describe
+  
+  # Aggregations
+  - sum
+  - mean
+  - median
+  - std
+  - var
+  - min
+  - max
+  - count
+  - nunique
+  - value_counts
+  
+  # Grouping
+  - groupby
+  - agg
+  - aggregate
+  - transform
+  - apply
+  
+  # Filtering
+  - query
+  - filter
+  - where
+  - mask
+  - isin
+  - between
+  
+  # Sorting
+  - sort_values
+  - sort_index
+  - nlargest
+  - nsmallest
+  
+  # Reshaping
+  - pivot
+  - pivot_table
+  - melt
+  - stack
+  - unstack
+  - transpose
+  
+  # Joining
+  - merge
+  - join
+  - concat
+  
+  # String operations (via .str accessor)
+  - str.contains
+  - str.startswith
+  - str.endswith
+  - str.lower
+  - str.upper
+  - str.strip
+  - str.replace
+  - str.split
+  
+  # Date operations (via .dt accessor)
+  - dt.year
+  - dt.month
+  - dt.day
+  - dt.date
+  - dt.time
+  
+  # Type conversion
+  - astype
+  - to_numeric
+  - to_datetime
+  
+  # Missing values
+  - isna
+  - isnull
+  - notna
+  - notnull
+  - fillna
+  - dropna
+
+# ============================================================================
+# Allowed NumPy Operations - Safe numerical functions
+# ============================================================================
+allowed_numpy_operations:
+  # Array creation
+  - array
+  - zeros
+  - ones
+  - empty
+  - full
+  - arange
+  - linspace
+  - logspace
+  
+  # Math operations
+  - add
+  - subtract
+  - multiply
+  - divide
+  - power
+  - sqrt
+  - exp
+  - log
+  - log10
+  - log2
+  - abs
+  - round
+  - floor
+  - ceil
+  
+  # Statistics
+  - mean
+  - median
+  - std
+  - var
+  - sum
+  - prod
+  - min
+  - max
+  - argmin
+  - argmax
+  - percentile
+  - quantile
+  - corrcoef
+  - cov
+  
+  # Linear algebra
+  - dot
+  - matmul
+  - transpose
+  - reshape
+  - flatten
+  - ravel
+  
+  # Comparison
+  - equal
+  - not_equal
+  - greater
+  - less
+  - greater_equal
+  - less_equal
+  - all
+  - any
+  - where
+  
+  # Sorting
+  - sort
+  - argsort
+  - unique
+
+# ============================================================================
+# Execution Limits
+# ============================================================================
+execution:
+  # Maximum execution time in seconds
+  timeout_seconds: 30
+  
+  # Maximum memory usage in MB
+  max_memory_mb: 512
+  
+  # Maximum output length in characters
+  max_output_length: 10000
+  
+  # Maximum number of loop iterations
+  max_iterations: 10000
+  
+  # Maximum recursion depth
+  max_recursion_depth: 100
+
+# ============================================================================
+# AST Analysis Settings
+# ============================================================================
+ast_analysis:
+  # Enable AST-based code validation
+  enabled: true
+  
+  # Block dangerous function calls
+  block_dangerous_calls: true
+  
+  # Block attribute access to private members
+  block_private_access: true
+  
+  # Block dunder method calls
+  block_dunder_methods: true
+  
+  # Allowed builtins
+  allowed_builtins:
+    - print
+    - len
+    - range
+    - enumerate
+    - zip
+    - map
+    - filter
+    - sorted
+    - reversed
+    - list
+    - dict
+    - set
+    - tuple
+    - str
+    - int
+    - float
+    - bool
+    - abs
+    - round
+    - min
+    - max
+    - sum
+    - any
+    - all
+    - type
+    - isinstance
+    - hasattr
+    - getattr
+
+# ============================================================================
+# Logging Settings
+# ============================================================================
+logging:
+  # Log blocked operations
+  log_blocked: true
+  
+  # Log execution times
+  log_timing: true
+  
+  # Log file path
+  log_path: "logs/security.log"
